@@ -23,6 +23,7 @@ void hold_low(dht11_t dht11,int hold_time_us)
 {
     gpio_set_direction(dht11.dht11_pin,GPIO_MODE_OUTPUT);
     gpio_set_level(dht11.dht11_pin,0);
+    printf("Holding...");
     ets_delay_us(hold_time_us);
     gpio_set_level(dht11.dht11_pin,1);
 }
@@ -48,38 +49,29 @@ int dht11_read(dht11_t *dht11,int connection_timeout)
     {
         timeout_counter++;
         gpio_set_direction(dht11->dht11_pin,GPIO_MODE_INPUT);
-        hold_low(*dht11, 18000);
-
-        //
-    gpio_set_direction(dht11->dht11_pin,GPIO_MODE_INPUT);
-    int state = gpio_get_level(dht11->dht11_pin);
-    for(int iter=0; iter<15; iter++){
-        printf("%d\n", state);
-        waited = wait_for_state(*dht11, (state+1)%2, 200);
-        printf("time to change: %ld\n", (long int) waited);
-        state = gpio_get_level(dht11->dht11_pin);
-    }
-    //
+        hold_low(*dht11, 20000);
+        ets_delay_us(30);
         
-        waited = wait_for_state(*dht11,1,40);
-
+        waited = wait_for_state(*dht11,0,40);  
         if(waited == -1)
         {
             ESP_LOGE("DHT11:","Failed at phase 1");
             ets_delay_us(20000);
             continue;
         } 
+        //printf("Stage 1: %d", waited);
 
 
-        waited = wait_for_state(*dht11,0,90);
+        waited = wait_for_state(*dht11,1,90);
         if(waited == -1)
         {
             ESP_LOGE("DHT11:","Failed at phase 2");
             ets_delay_us(20000);
             continue;
         } 
+        //printf("Stage 2: %d", waited);
         
-        waited = wait_for_state(*dht11,1,90);
+        waited = wait_for_state(*dht11,0,90);
         if(waited == -1)
         {
             ESP_LOGE("DHT11:","Failed at phase 3");
@@ -96,8 +88,8 @@ int dht11_read(dht11_t *dht11,int connection_timeout)
     {
         for(int j = 0; j < 8; j++)
         {
-            zero_duration = wait_for_state(*dht11,0,58);
-            one_duration = wait_for_state(*dht11,1,74);
+            zero_duration = wait_for_state(*dht11,1,58);
+            one_duration = wait_for_state(*dht11,0,74);
             received_data[i] |= (one_duration > zero_duration) << (7 - j);
         }
     }
